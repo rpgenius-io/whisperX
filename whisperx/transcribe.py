@@ -162,7 +162,7 @@ def cli():
     if args["max_line_count"] and not args["max_line_width"]:
         warnings.warn("--max_line_count has no effect without --max_line_width")
     writer_args = {arg: args.pop(arg) for arg in word_options}
-    
+
     # Part 1: VAD & ASR Loop
     results = []
     tmp_results = []
@@ -218,8 +218,9 @@ def cli():
         results = []
         diarize_model = DiarizationPipeline(use_auth_token=hf_token, device=device)
         for result, input_audio_path in tmp_results:
-            diarize_segments = diarize_model(input_audio_path, min_speakers=min_speakers, max_speakers=max_speakers)
+            diarize_segments, embeddings = diarize_model(input_audio_path, min_speakers=min_speakers, max_speakers=max_speakers)
             result = assign_word_speakers(diarize_segments, result)
+            result["embeddings"] = {k: [float(x) for x in v.tolist()] for k, v in embeddings.items()}
             results.append((result, input_audio_path))
     # >> Write
     for result, audio_path in results:
